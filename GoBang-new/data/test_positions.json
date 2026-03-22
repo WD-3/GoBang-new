@@ -1,0 +1,36 @@
+{
+  "description": "Test positions for Gomoku evaluation",
+  "version": "1.0",
+  "test_cases": [
+    {
+      "id": "test_001",
+      "name": "Win in one - horizontal",
+      "board_size": 15,
+      "setup_moves": ["H8", "I8", "J8", "K8"],
+      "current_stone": "BLACK",
+      "expected_best_move": "L8",
+      "description": "Black can win with horizontal five"
+    },
+    {
+      "id": "test_002",
+      "name": "Block opponent win",
+      "board_size": 15,
+      "setup_moves": [
+        "H8:WHITE", "I8:WHITE", "J8:WHITE", "K8:WHITE",
+        "H9:BLACK", "I9:BLACK"
+      ],
+      "current_stone": "BLACK",
+      "expected_best_moves": ["G8", "L8"],
+      "description": "Black must block White's four"
+    },
+    {
+      "id": "test_003",
+      "name": "Create open three",
+      "board_size": 15,
+      "setup_moves": ["H8", "I8"],
+      "current_stone": "BLACK",
+      "expected_good_moves": ["J8", "G8"],
+      "description": "Black should extend to open three"
+    }
+  ]
+}

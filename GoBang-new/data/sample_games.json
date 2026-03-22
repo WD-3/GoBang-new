@@ -1,0 +1,59 @@
+{
+  "description": "Sample games for GoBang testing and demonstration",
+  "version": "1.0",
+  "games": [
+    {
+      "id": "sample_001",
+      "name": "Quick win - Black horizontal",
+      "board_size": 15,
+      "rule_mode": "free_style",
+      "moves": [
+        {"position": "H8", "stone": "BLACK"},
+        {"position": "H9", "stone": "WHITE"},
+        {"position": "I8", "stone": "BLACK"},
+        {"position": "I9", "stone": "WHITE"},
+        {"position": "J8", "stone": "BLACK"},
+        {"position": "J9", "stone": "WHITE"},
+        {"position": "K8", "stone": "BLACK"},
+        {"position": "K9", "stone": "WHITE"},
+        {"position": "L8", "stone": "BLACK"}
+      ],
+      "result": {
+        "winner": "BLACK",
+        "reason": "five_in_a_row"
+      }
+    },
+    {
+      "id": "sample_002",
+      "name": "Diagonal win - White",
+      "board_size": 15,
+      "rule_mode": "free_style",
+      "moves": [
+        {"position": "H8", "stone": "BLACK"},
+        {"position": "G7", "stone": "WHITE"},
+        {"position": "H9", "stone": "BLACK"},
+        {"position": "H7", "stone": "WHITE"},
+        {"position": "I8", "stone": "BLACK"},
+        {"position": "I6", "stone": "WHITE"},
+        {"position": "J8", "stone": "BLACK"},
+        {"position": "J5", "stone": "WHITE"},
+        {"position": "K9", "stone": "BLACK"},
+        {"position": "K4", "stone": "WHITE"}
+      ],
+      "result": {
+        "winner": "WHITE",
+        "reason": "five_in_a_row"
+      }
+    },
+    {
+      "id": "sample_003",
+      "name": "Center opening",
+      "board_size": 15,
+      "rule_mode": "free_style",
+      "moves": [
+        {"position": "H8", "stone": "BLACK"}
+      ],
+      "result": null
+    }
+  ]
+}

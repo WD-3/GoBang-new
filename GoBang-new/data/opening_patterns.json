@@ -1,0 +1,25 @@
+{
+  "description": "Opening patterns for Gomoku",
+  "version": "1.0",
+  "patterns": [
+    {
+      "name": "Direct Opening",
+      "description": "Place stone in the center",
+      "first_move": "H8",
+      "category": "center"
+    },
+    {
+      "name": "Indirect Opening",
+      "description": "Place stone off-center",
+      "first_move": "H9",
+      "category": "center"
+    }
+  ],
+  "common_responses": [
+    {
+      "first_move": "H8",
+      "responses": ["G8", "H7", "I8", "H9", "G9", "I7"],
+      "description": "Common responses to center opening"
+    }
+  ]
+}
