@@ -1,0 +1,439 @@
+================================================================================
+                        五子棋 (Gomoku) 完整规则说明
+                        Complete Rules of Gomoku/Five-in-a-Row
+================================================================================
+
+【一、游戏概述 / Game Overview】
+--------------------------------------------------------------------------------
+五子棋是一种两人对弈的纯策略型棋类游戏。
+Gomoku is a pure strategy board game played by two players.
+
+- 棋盘：15×15 网格（标准比赛规格）
+  Board: 15×15 grid (standard tournament specification)
+  
+- 棋子：黑白两色，黑方先行
+  Stones: Black and White, Black moves first
+  
+- 目标：先连成 5 子者获胜
+  Objective: First to connect 5 stones wins
+
+================================================================================
+
+【二、核心规则 / Core Rules】
+--------------------------------------------------------------------------------
+
+2.1 获胜条件 / Win Condition
+---------------------------
+先在以下任一方向连成连续 5 子者获胜：
+First to connect 5 consecutive stones in ANY of these directions WINS:
+
+    ●●●●●  ← 横向/Horizontal
+    ●
+    ●
+    ●      ← 纵向/Vertical  
+    ●
+    ●
+     ●
+      ●
+       ●
+        ●  ← 斜向/Diagonal (左上到右下)
+         ●
+          ●
+           ●
+            ●
+             ●  ← 斜向/Diagonal (右上到左下)
+
+2.2 落子规则 / Move Rule
+-----------------------
+✓ 允许：下在任意空位 (·) 上
+   Valid: Place stone on any empty position (·)
+
+✗ 禁止：下在已有棋子的位置
+   Invalid: Place stone on occupied position
+
+✗ 禁止：下在棋盘外
+   Invalid: Place stone outside the board
+
+✗ 禁止：跳过回合
+   Invalid: Skip turn
+
+2.3 先后手规则 / Turn Order
+--------------------------
+1. 黑方 (●) 先行 / Black (●) moves first
+2. 双方交替落子 / Players alternate turns
+3. 每回合必须落子一子 / Must place exactly one stone per turn
+
+2.4 和棋条件 / Draw Condition
+----------------------------
+当满足以下条件时，游戏判定为和棋：
+Game is declared a DRAW when:
+
+- 棋盘 225 个位置全部下满
+  All 225 positions (15×15) are filled
+  
+- 且双方均未连成 5 子
+  AND neither player has connected 5 stones
+
+================================================================================
+
+【三、坐标系统 / Coordinate System】
+--------------------------------------------------------------------------------
+
+3.1 坐标表示法 / Coordinate Notation
+-----------------------------------
+棋盘使用字母 - 数字坐标系统：
+Board uses alphanumeric coordinate system:
+
+        A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   1  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 1
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   2  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 2
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   3  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 3
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   4  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 4
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   5  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 5
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   6  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 6
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   7  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 7
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   8  | · | · | · | · | · | · | · | ★ | · | · | · | · | · | · | · | 8  ← H8(中心)
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   9  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 9
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  10  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 10
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  11  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 11
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  12  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 12
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  13  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 13
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  14  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 14
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  15  | · | · | · | · | · | · | · | · | · | · | · | · | · | · | · | 15
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+        A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+
+3.2 坐标示例 / Coordinate Examples
+---------------------------------
+| 坐标 | 位置说明              |
+|------|----------------------|
+| A1   | 左上角 / Top-left corner |
+| O1   | 右上角 / Top-right corner |
+| A15  | 左下角 / Bottom-left corner |
+| O15  | 右下角 / Bottom-right corner |
+| H8   | 棋盘中心 / Center of board |
+
+================================================================================
+
+【四、棋型术语与定义 / Pattern Terminology】
+--------------------------------------------------------------------------------
+
+4.1 五连 / Five (GAME WIN)
+-------------------------
+定义：连续 5 个同色棋子相连
+Definition: 5 consecutive stones of same color connected
+
+示例：
+    ●●●●●  ← 五连，立即获胜！
+    
+状态：游戏结束，该玩家获胜
+Status: GAME OVER, this player WINS
+
+4.2 活四 / Open Four (★★★★★ 极高威胁)
+------------------------------------
+定义：4 子相连，且两端都是空位
+Definition: 4 stones connected, BOTH ends are empty
+
+示例：
+    ·●●●●·  ← 活四
+    
+威胁等级：致命 / Lethal
+应对：
+  - 进攻方：下一步必然成五连获胜
+    Attacker: Next move will definitely form 5-in-a-row and WIN
+  - 防守方：必须立即阻挡，但已无法阻止（两端都能成五）
+    Defender: Must block immediately, but cannot stop (both ends work)
+
+4.3 冲四 / Rush Four (★★★★ 高威胁)
+----------------------------------
+定义：4 子相连，但一端已被堵住
+Definition: 4 stones connected, but ONE end is blocked
+
+示例：
+    ·●●●●○  ← 冲四（右端被堵）
+    ○●●●●·  ← 冲四（左端被堵）
+    
+威胁等级：高 / High
+应对：
+  - 进攻方：下一步可成五连
+    Attacker: Can form 5-in-a-row next move
+  - 防守方：必须在空的一端阻挡
+    Defender: Must block at the empty end
+
+4.4 活三 / Open Three (★★★ 中等威胁)
+------------------------------------
+定义：3 子相连，且两端都是空位
+Definition: 3 stones connected, BOTH ends are empty
+
+示例：
+    ·●●●·  ← 活三
+    
+威胁等级：中等 / Medium
+应对：
+  - 进攻方：可发展为活四或冲四
+    Attacker: Can develop into open-four or rush-four
+  - 防守方：应考虑阻挡，否则可能形成四连
+    Defender: Should consider blocking, or opponent may form 4-in-a-row
+
+4.5 眠三 / Sleep Three (★★ 低威胁)
+----------------------------------
+定义：3 子相连，但一端已被堵住
+Definition: 3 stones connected, but ONE end is blocked
+
+示例：
+    ·●●●○  ← 眠三
+    ○●●●·  ← 眠三
+    
+威胁等级：低 / Low
+应对：
+  - 进攻方：需要继续发展
+    Attacker: Needs to continue developing
+  - 防守方：可以暂时不处理，优先处理更大威胁
+    Defender: Can temporarily ignore, prioritize bigger threats
+
+4.6 活二 / Open Two (★ 潜在威胁)
+--------------------------------
+定义：2 子相连，且两端都是空位
+Definition: 2 stones connected, BOTH ends are empty
+
+示例：
+    ·●●·  ← 活二
+    
+威胁等级：低 / Low
+说明：早期布局阶段常见，需要继续发展
+Note: Common in opening stage, needs further development
+
+================================================================================
+
+【五、策略优先级 / Strategy Priority】
+--------------------------------------------------------------------------------
+
+按以下顺序判断，满足条件立即执行：
+Evaluate in the following order, execute immediately when condition is met:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🥇 P0 - 获胜优先 / WIN IMMEDIATELY                                          │
+│    优先级：100 (最高) / Priority: 100 (Highest)                             │
+│                                                                             │
+│    条件：己方有四连/活四                                                    │
+│    Condition: You have 4-in-a-row / open-four                               │
+│                                                                             │
+│    行动：立即落子完成五连获胜                                               │
+│    Action: Place stone immediately to complete 5-in-a-row and WIN           │
+│                                                                             │
+│    示例：·●●●● → 下在任意空端 → ●●●●● 获胜！                               │
+│    Example: ·●●●● → Place at either end → ●●●●● WIN!                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🥇 P1 - 必防 / MUST BLOCK                                                   │
+│    优先级：90 / Priority: 90                                                │
+│                                                                             │
+│    条件：对手有四连/活四                                                    │
+│    Condition: Opponent has 4-in-a-row / open-four                           │
+│                                                                             │
+│    行动：必须阻挡，否则输棋                                                 │
+│    Action: MUST block, or LOSE the game                                     │
+│                                                                             │
+│    示例：对手·○○○○ → 必须堵在空端                                         │
+│    Example: Opponent ·○○○○ → MUST block at empty end                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🥈 P2 - 进攻威胁 / CREATE THREAT                                            │
+│    优先级：70 / Priority: 70                                                │
+│                                                                             │
+│    条件：己方有活三                                                         │
+│    Condition: You have open-three                                           │
+│                                                                             │
+│    行动：发展成活四或冲四                                                   │
+│    Action: Develop into open-four or rush-four                              │
+│                                                                             │
+│    示例：·●●●· → 下在一端形成·●●●●                                         │
+│    Example: ·●●●· → Place at one end to form ·●●●●                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🥈 P3 - 防守威胁 / BLOCK THREAT                                             │
+│    优先级：60 / Priority: 60                                                │
+│                                                                             │
+│    条件：对手有活三                                                         │
+│    Condition: Opponent has open-three                                       │
+│                                                                             │
+│    行动：阻挡其发展                                                         │
+│    Action: Block their development                                          │
+│                                                                             │
+│    示例：对手·○○○· → 堵在一端                                             │
+│    Example: Opponent ·○○○· → Block at one end                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 🥉 P4 - 抢占要点 / CONTROL KEY POINTS                                       │
+│    优先级：50 / Priority: 50                                                │
+│                                                                             │
+│    条件：无明显威胁时                                                       │
+│    Condition: When no obvious threats exist                                 │
+│                                                                             │
+│    行动：                                                                   │
+│    Action:                                                                  │
+│    1. 优先中心：H8 及周边位置                                               │
+│       Prioritize center: H8 and surrounding positions                       │
+│                                                                             │
+│    2. 靠近己方棋子：形成连接                                                │
+│       Near own stones: Form connections                                     │
+│                                                                             │
+│    3. 阻断对手：切断对手棋子连接                                            │
+│       Block opponent: Cut opponent's connections                            │
+│                                                                             │
+│    4. 避免边角：除非有特殊战术                                              │
+│       Avoid corners: Unless special tactics                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+
+【六、位置优先级 / Position Priority】
+--------------------------------------------------------------------------------
+
+6.1 区域划分 / Zone Division
+---------------------------
+
+        A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   1  | C | C | C | C | C | C | C | C | C | C | C | C | C | C | C | 1  ← 边角区
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+     Corner Zone
+   2  | C | B | B | B | B | B | B | B | B | B | B | B | B | B | C | 2
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   3  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 3
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   4  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 4
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   5  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 5
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   6  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 6
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   7  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 7
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+   8  | C | B | A | A | A | A | A |★| A | A | A | A | A | B | C | 8  ← 中心区
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+     Center Zone
+   9  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 9     (A 区)
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  10  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 10
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  11  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 11
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  12  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 12
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  13  | C | B | A | A | A | A | A | A | A | A | A | A | A | B | C | 13
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  14  | C | B | B | B | B | B | B | B | B | B | B | B | B | B | C | 14
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+  15  | C | C | C | C | C | C | C | C | C | C | C | C | C | C | C | 15  ← 边角区
+      +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+     Corner Zone
+        A   B   C   D   E   F   G   H   I   J   K   L   M   N   O
+
+A 区 = 中心区域 (优先) / Center Zone (Priority)
+B 区 = 过渡区域 (次优) / Transition Zone (Secondary)
+C 区 = 边角区域 (避免) / Corner Zone (Avoid)
+
+6.2 开局建议 / Opening Recommendations
+-------------------------------------
+✓ 推荐：前 3 手下在中心区域 (E5-O11 范围内)
+   Recommended: First 3 moves in center zone (within E5-O11)
+
+✓ 推荐：优先 H8 及周边 (F6-K11 范围内)
+   Recommended: Prioritize H8 and surroundings (within F6-K11)
+
+✗ 避免：前 5 手下在边角 (A1-D4, L1-O4, A12-D15, L12-O15)
+   Avoid: First 5 moves in corners (A1-D4, L1-O4, A12-D15, L12-O15)
+
+================================================================================
+
+【七、常见错误与避免 / Common Mistakes to Avoid】
+--------------------------------------------------------------------------------
+
+❌ 错误 1：无视对手四连
+   Mistake 1: Ignoring opponent's 4-in-a-row
+   后果：立即输棋
+   Consequence: Immediate loss
+   
+   ✓ 正确：发现对手四连必须立即阻挡
+   ✓ Correct: Must block immediately when opponent has 4-in-a-row
+
+❌ 错误 2：有获胜机会不赢
+   Mistake 2: Not winning when opportunity exists
+   后果：错失必胜局面
+   Consequence: Miss winning position
+   
+   ✓ 正确：优先检查己方是否能成五连
+   ✓ Correct: Always check if you can form 5-in-a-row first
+
+❌ 错误 3：乱下边角
+   Mistake 3: Randomly playing corners/edges
+   后果：失去中心控制权
+   Consequence: Lose center control
+   
+   ✓ 正确：前期抢占中心，后期根据局势
+   ✓ Correct: Control center early, adapt later
+
+❌ 错误 4：不连自己的子
+   Mistake 4: Not connecting own stones
+   后果：棋子分散，无法形成威胁
+   Consequence: Scattered stones, no threats
+   
+   ✓ 正确：尽量靠近己方棋子落子
+   ✓ Correct: Play near own stones when possible
+
+❌ 错误 5：不挡对手活三
+   Mistake 5: Not blocking opponent's open-three
+   后果：对手发展成活四，难以防守
+   Consequence: Opponent develops open-four, hard to defend
+   
+   ✓ 正确：对手活三应考虑阻挡
+   ✓ Correct: Consider blocking opponent's open-three
+
+================================================================================
+
+【八、输出格式要求 / Output Format Requirements】
+--------------------------------------------------------------------------------
+
+✓ 正确格式 / Correct Format:
+   H8
+   D4
+   K12
+
+✗ 错误格式 / Incorrect Format:
+   "H8"           ← 不要引号 / No quotes
+   H8.            ← 不要句号 / No period
+   下在 H8        ← 不要解释 / No explanation
+   I think H8     ← 不要思考过程 / No reasoning
+   H8 (中心)       ← 不要注释 / No comments
+
+================================================================================
+
+【九、规则版本信息 / Rule Version Info】
+--------------------------------------------------------------------------------
+版本/Version: 1.0
+更新日期/Last Updated: 2026-04-16
+适用模式/Applicable Modes: 自由规则 (Free Style)
+
+注：本规则为自由规则 (Free Style)，不包含连珠 (Renju) 的禁手规则。
+Note: This is Free Style rule, does NOT include Renju forbidden moves.
+
+================================================================================
+                              文档结束 / END OF DOCUMENT
+================================================================================

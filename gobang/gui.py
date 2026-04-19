@@ -65,6 +65,14 @@ class AIWorker(QObject):
         try:
             import copy
 
+            # Critical: Check if game is still playing before starting AI calculation
+            if self.game.state != GameState.PLAYING:
+                print(
+                    f"[AI Worker] Game already ended (state={self.game.state}), skipping AI calculation"
+                )
+                self.finished.emit(None, 0)
+                return
+
             game_copy = self.game.copy()
             current_player = game_copy.current_player
             pos = None
@@ -630,7 +638,6 @@ class MainWindow(QMainWindow):
 
         self.auto_play_enabled = False
         self.auto_play_btn.setText("Auto Play")
-        self.auto_play_timer.stop()
 
     def _create_player(self, stone: Stone, config: Dict[str, Any]) -> Player:
         player_type = config.get("type", "human")
@@ -683,9 +690,21 @@ class MainWindow(QMainWindow):
 
     def start_ai_move(self):
         if self.game is None or self.game.state != GameState.PLAYING:
+            print(
+                f"[DEBUG] start_ai_move: Game not playing (state={self.game.state if self.game else 'None'})"
+            )
             return
 
-        if self._ai_thread is not None and self._ai_thread.isRunning():
+        # Use mutex to prevent race conditions
+        if self._mutex.tryLock():
+            try:
+                if self._ai_thread is not None and self._ai_thread.isRunning():
+                    print(f"[DEBUG] start_ai_move: AI thread already running, skipping")
+                    return
+            finally:
+                self._mutex.unlock()
+        else:
+            print(f"[DEBUG] start_ai_move: Could not acquire mutex, skipping")
             return
 
         current_player = self.game.current_player
@@ -711,7 +730,14 @@ class MainWindow(QMainWindow):
                 QTimer.singleShot(100, self.auto_move_step)
             return
 
-        success, _ = self.game.make_move(pos, thinking_time_ms)
+        # Critical fix: Check if game is still playing before making AI move
+        # This prevents AI from making moves after game has ended
+        if self.game.state != GameState.PLAYING:
+            print(f"[DEBUG] Game already ended (state={self.game.state}), ignoring AI move")
+            self.stop_auto_play()
+            return
+
+        success, message = self.game.make_move(pos, thinking_time_ms)
         if success:
             self.board_widget.update()
             self.update_history_table()
@@ -722,6 +748,10 @@ class MainWindow(QMainWindow):
                 )
                 self.stop_auto_play()
             elif self.auto_play_enabled:
+                QTimer.singleShot(300, self.auto_move_step)
+        else:
+            print(f"[DEBUG] AI move failed: {message}")
+            if self.auto_play_enabled:
                 QTimer.singleShot(300, self.auto_move_step)
 
     def _on_ai_error(self, error_msg: str):

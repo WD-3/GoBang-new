@@ -1,0 +1,281 @@
+================================================================================
+                        GoBang 严重问题修复说明
+                        Critical Bug Fixes for GoBang
+================================================================================
+
+修复日期/Fix Date: 2026-04-16
+问题严重性/Severity: ★★★★★ (Critical)
+
+================================================================================
+
+【问题诊断 / Problem Diagnosis】
+--------------------------------------------------------------------------------
+
+用户报告的严重问题：
+1. ❌ Temperature 形同虚设 - 调节后棋局毫无变化
+2. ❌ 每局棋完全一样 - 循环三局，每一局都一模一样
+3. ❌ 第六颗黑棋卡死 - 每次都到同一位置卡住
+4. ❌ 棋子闪现复现 - 重新开始后棋子按原路线下两颗后直接结束
+
+根本原因/Root Causes:
+1. ❌ Temperature 参数没有传递到 LLM 玩家创建函数
+2. ❌ 游戏结束后没有清理，导致 LLM 玩家对象被复用
+3. ❌ 白方内存数据收集缩进错误（在 if 块外）
+4. ❌ 网页端没有发送 temperature 参数到后端
+
+================================================================================
+
+【已修复的问题 / Fixed Issues】
+--------------------------------------------------------------------------------
+
+✅ 修复 1: 后端 Temperature 参数传递
+   文件：gobang/app.py
+   位置：第 490-514 行 (_setup_llm_players 函数)
+   
+   修改内容:
+   - 黑方 LLM 玩家创建时添加 temperature 参数
+   - 白方 LLM 玩家创建时添加 temperature 参数
+   - 从玩家配置中读取 temperature，默认值 0.5
+   
+   代码示例:
+   ```python
+   temperature = config.get("temperature", 0.5)
+   llm_players[game_id][Stone.BLACK] = create_llm_player(
+       Stone.BLACK,
+       provider=config.get("provider", "ollama"),
+       model=model,
+       base_url=config.get("base_url"),
+       temperature=temperature,  # ← 新增
+   )
+   ```
+
+✅ 修复 2: 网页端发送 Temperature 参数
+   文件：gobang/templates/index.html
+   位置：第 1819-1822 行 (游戏创建请求)
+   
+   修改内容:
+   - 在创建游戏的 POST 请求中添加 temperature 字段
+   - 从 configuration.temperature 获取值
+   
+   代码示例:
+   ```javascript
+   body: JSON.stringify({
+       board_size: config.boardSize,
+       rule_mode: config.ruleMode,
+       black_player: config.blackPlayer,
+       white_player: config.whitePlayer,
+       temperature: config.temperature  // ← 新增
+   })
+   ```
+
+✅ 修复 3: 游戏结束后清理
+   文件：gobang/templates/index.html
+   位置：第 1918 行后
+   
+   修改内容:
+   - 每局游戏统计完成后删除游戏
+   - 避免 LLM 玩家对象被下一局复用
+   - 防止状态污染
+   
+   代码示例:
+   ```javascript
+   // 清理游戏，避免状态污染
+   try {
+       await fetch(`/api/games/${gameId}`, { method: 'DELETE' });
+       console.log(`Game ${gameId} cleaned up`);
+   } catch (e) {
+       console.log('Failed to delete game:', e);
+   }
+   ```
+
+✅ 修复 4: 白方内存数据收集缩进
+   文件：gobang/templates/index.html
+   位置：第 1883-1884 行
+   
+   修改内容:
+   - 将白方内存收集代码移入 if 块内
+   - 确保只在白方回合时收集数据
+   
+   修改前:
+   ```javascript
+   if (perf.gpu_available) {
+       if (currentStone === 'BLACK') {
+           // 黑方数据收集
+       } else {
+           // 白方 GPU 数据收集
+       }
+   }
+   batchStats.whiteMemTotal += perf.memory_percent;  // ← 错误：在 if 外
+   batchStats.whiteMemSamples++;                      // ← 错误：在 if 外
+   ```
+   
+   修改后:
+   ```javascript
+   if (perf.gpu_available) {
+       if (currentStone === 'BLACK') {
+           // 黑方数据收集
+           batchStats.blackMemTotal += perf.memory_percent;
+           batchStats.blackMemSamples++;
+       } else {
+           // 白方数据收集
+           batchStats.whiteMemTotal += perf.memory_percent;
+           batchStats.whiteMemSamples++;
+       }
+   }
+   ```
+
+================================================================================
+
+【修改的文件 / Modified Files】
+--------------------------------------------------------------------------------
+
+1. gobang/app.py
+   - 第 490-514 行：_setup_llm_players 函数
+   - 添加 temperature 参数读取和传递
+   - 添加调试日志（打印 temperature 值）
+
+2. gobang/templates/index.html
+   - 第 1819-1822 行：游戏创建请求
+   - 第 1883-1884 行：白方内存数据收集缩进
+   - 第 1918 行后：游戏清理代码
+
+================================================================================
+
+【重启后预期效果 / Expected Behavior After Restart】
+--------------------------------------------------------------------------------
+
+✅ Temperature 调节生效:
+   - 调整滑块后，下一局新游戏会使用新的 temperature 值
+   - 0.3: 棋局稳定，变化较少
+   - 0.5: 适度变化，推荐设置
+   - 0.8: 变化较多，更有创意
+
+✅ 每局棋不同:
+   - 即使使用相同模型对战，每局棋也会有差异
+   - Temperature=0.5 时，应有明显不同的走法
+
+✅ 不再卡死:
+   - 每局游戏独立，不会相互影响
+   - 游戏结束后自动清理，释放资源
+
+✅ 不再闪现复现:
+   - 每局新游戏从空棋盘开始
+   - 不会继承上一局的状态
+
+================================================================================
+
+【重启步骤 / Restart Steps】
+--------------------------------------------------------------------------------
+
+1. 停止当前服务器
+   按 Ctrl+C 停止运行中的服务器
+
+2. 重新启动服务器
+   .venv\Scripts\python.exe -m gobang web --port 5000
+
+3. 观察启动日志
+   应该看到类似以下输出:
+   Starting GoBang web server at http://127.0.0.1:5000
+   Version: 1.1.0
+
+4. 测试 Temperature 调节
+   - 打开浏览器访问 http://127.0.0.1:5000
+   - 进入"机机对抗"模式
+   - 选择两个相同的 4B 模型（如 qwen3-4b vs qwen3-4b）
+   - 设置 Temperature=0.5
+   - 开始循环对战（3 局）
+   - 观察每局棋是否不同
+
+5. 测试 Temperature 变化
+   - 调整 Temperature 滑块到 0.3
+   - 重新开始循环对战
+   - 观察棋局变化是否减少
+   - 调整 Temperature 到 0.8
+   - 重新开始循环对战
+   - 观察棋局变化是否增多
+
+================================================================================
+
+【调试日志 / Debug Logging】
+--------------------------------------------------------------------------------
+
+服务器启动后，在命令行应该看到以下日志:
+
+创建游戏时:
+[AUTO] Game <game_id> - LLM players cache: [<game_id>]
+[AUTO] Game <game_id> - This game LLM players: {<Stone.BLACK>: <LLMPlayer>, ...}
+
+创建 LLM 玩家时:
+[_setup_llm_players] Creating NEW LLM players for game <game_id>
+Creating black LLM player with model: qwen3-4b, temperature: 0.5
+Creating white LLM player with model: qwen3-4b, temperature: 0.5
+
+游戏清理时:
+Game <game_id> cleaned up
+
+如果看到这些日志，说明修复生效了！
+
+================================================================================
+
+【故障排查 / Troubleshooting】
+--------------------------------------------------------------------------------
+
+问题 1: Temperature 仍然不生效
+解决:
+- 检查浏览器控制台（F12）是否有错误
+- 确认网页端发送了 temperature 参数
+- 重启服务器确保代码重新加载
+
+问题 2: 棋局仍然完全一样
+解决:
+- 确认 Temperature 不为 0（0 表示确定性输出）
+- 检查 Ollama 是否支持 temperature 参数
+- 尝试更换不同的模型测试
+
+问题 3: 仍然卡死在第六颗棋
+解决:
+- 检查 Ollama 服务是否正常运行
+- 查看服务器日志是否有超时错误
+- 增加超时时间（当前 120 秒）
+
+问题 4: 游戏清理失败
+解决:
+- 检查浏览器控制台错误
+- 确认 DELETE 请求成功
+- 手动刷新页面清除状态
+
+================================================================================
+
+【技术细节 / Technical Details】
+--------------------------------------------------------------------------------
+
+Temperature 参数传递链路:
+1. 网页端滑块 → document.getElementById('temperatureSlider').value
+2. getModeConfig() → config.temperature
+3. fetch('/api/games') → body: { temperature: config.temperature }
+4. app.py api_create_game() → data.get("temperature")
+5. _setup_llm_players() → config.get("temperature", 0.5)
+6. create_llm_player() → temperature=temperature
+7. OllamaClient / OpenAICompatibleClient → self.temperature
+8. LLM API 调用 → temperature=self.temperature
+
+游戏清理链路:
+1. 局结束 → batchStats.gameResults.push()
+2. 清理代码 → fetch(`/api/games/${gameId}`, { method: 'DELETE' })
+3. app.py api_delete_game() → del games[game_id], del llm_players[game_id]
+4. 资源释放 → Python GC 回收对象
+
+================================================================================
+
+【版本信息 / Version Info】
+--------------------------------------------------------------------------------
+
+修复前版本：1.1.0 (有问题)
+修复后版本：1.1.0 (已修复)
+
+修改者：AI Assistant
+审核状态：待用户验证
+
+================================================================================
+                              文档结束 / END OF DOCUMENT
+================================================================================

@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoBang AI - 五子棋对弈平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .header .version {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+        
+        /* 主菜单样式 */
+        .main-menu {
+            max-width: 900px;
+            margin: 4rem auto;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .main-menu h2 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 3rem;
+        }
+        
+        .mode-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        
+        .mode-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .mode-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .mode-card h3 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 0.75rem;
+        }
+        
+        .mode-card p {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        /* 游戏界面容器 */
+        .game-interface {
+            display: none;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .game-interface.active {
+            display: block;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #333;
+            margin-bottom: 1rem;
+            transition: background 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        /* 普通模式布局 */
+        .normal-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+        }
+        
+        /* 机机对抗模式布局 - 顶部性能监控长条，下方左右分栏 */
+        .ai-battle-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* 顶部性能监控长条 */
+        .perf-bar-top {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            width: 100%;
+        }
+        
+        .perf-bar-top h3 {
+            color: #fff;
+            font-size: 0.8rem;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        .perf-bar-items {
+            display: flex;
+            flex: 1;
+            gap: 1.5rem;
+        }
+        
+        .perf-bar-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+        }
+        
+        .perf-bar-item .label {
+            font-size: 0.7rem;
+            color: #aaa;
+            white-space: nowrap;
+        }
+        
+        .perf-bar-item .value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4ade80;
+            min-width: 45px;
+        }
+        
+        .perf-bar-item .bar {
+            flex: 1;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .perf-bar-item .bar-fill {
+            height: 100%;
+            background: #4ade80;
+            transition: width 0.3s ease;
+        }
+        
+        /* 下方主内容区 - 左右对齐 */
+        .ai-battle-main-content {
+            display: grid;
+            grid-template-columns: 480px 1fr;
+            gap: 0.75rem;
+            align-items: end;
+        }
+        
+        .ai-battle-left {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ai-battle-right {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        /* 对战统计行样式 - 每行两个指标（紧凑版） */
+        .battle-stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .battle-stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 6px;
+            padding: 0.5rem 0.4rem;
+            text-align: center;
+            border-left: 3px solid #667eea;
+        }
+        
+        .battle-stat-card.black {
+            border-left-color: #333;
+        }
+        
+        .battle-stat-card.white {
+            border-left-color: #999;
+        }
+        
+        .battle-stat-card h4 {
+            font-size: 0.65rem;
+            color: #666;
+            margin-bottom: 0.2rem;
+            text-transform: uppercase;
+        }
+        
+        .battle-stat-card .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .battle-stat-card .sub-value {
+            font-size: 0.6rem;
+            color: #888;
+            margin-top: 0.1rem;
+        }
+        
+        /* 右侧底部区域（紧凑版） */
+        .right-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            height: fit-content;
+        }
+        
+        .sidebar h2 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #5a6fd6;
+        }
+        
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            margin-top: 0.5rem;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .game-area {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .status-bar {
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .status-text {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-indicator.black {
+            background-color: #333;
+        }
+        
+        .status-indicator.white {
+            background-color: #fff;
+            border: 2px solid #333;
+        }
+        
+        .board-container {
+            display: flex;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        .board {
+            background: #dcb35c;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .board-grid {
+            display: grid;
+            gap: 0;
+        }
+        
+        .board-cell {
+            width: 36px;
+            height: 36px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .board-cell::before,
+        .board-cell::after {
+            content: '';
+            position: absolute;
+            background: #8b7355;
+        }
+        
+        .board-cell::before {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+        }
+        
+        .board-cell::after {
+            width: 100%;
+            height: 1px;
+            top: 50%;
+        }
+        
+        .board-cell .stone {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            z-index: 1;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .board-cell .stone.black {
+            background: radial-gradient(circle at 30% 30%, #666, #000);
+        }
+        
+        .board-cell .stone.white {
+            background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+            border: 1px solid #ccc;
+        }
+        
+        .board-cell:hover::before {
+            background: rgba(100, 149, 237, 0.5);
+        }
+        
+        .board-cell.last-move .stone {
+            box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.5);
+        }
+        
+        .history-panel {
+            margin-top: 1.5rem;
+        }
+        
+        .history-panel h3 {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        
+        .history-list {
+            max-height: 150px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 0.5rem;
+        }
+        
+        .history-item {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            font-family: monospace;
+        }
+        
+        .history-item:nth-child(odd) {
+            background: #fff;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background-color: #28a745;
+        }
+        
+        .notification.error {
+            background-color: #dc3545;
+        }
+        
+        .notification.info {
+            background-color: #17a2b8;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .modal-content p {
+            margin-bottom: 1.5rem;
+            color: #666;
+        }
+        
+        /* ===== 机机对抗特殊样式 ===== */
+        .ai-battle-main {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .ai-battle-top {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        
+        /* 小棋盘区域 */
+        .small-board-area {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .small-board-area .status-bar {
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0.75rem;
+        }
+        
+        .small-board-area .board-container {
+            padding: 0.5rem;
+        }
+        
+        .small-board-area .board {
+            padding: 12px;
+        }
+        
+        /* 循环对战面板（紧凑版） */
+        .batch-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .batch-panel h2 {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .batch-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .batch-controls label {
+            font-weight: 500;
+            color: #333;
+            font-size: 0.875rem;
+        }
+        
+        .batch-controls input[type="number"] {
+            width: 80px;
+            padding: 0.4rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        
+        .btn-batch {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.4rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+        
+        .btn-batch:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-batch:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .batch-progress {
+            background: #f0f0f0;
+            border-radius: 4px;
+            height: 20px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .batch-progress-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        
+        .mini-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .mini-stat {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
+        .mini-stat h4 {
+            font-size: 0.7rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+        
+        .mini-stat .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        /* 底部区域：性能监控和导出 */
+        .ai-battle-bottom {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .performance-panel {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        
+        .performance-panel h3 {
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .perf-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        
+        .perf-item {
+            text-align: center;
+        }
+        
+        .perf-item .label {
+            font-size: 0.7rem;
+            color: #aaa;
+            margin-bottom: 0.25rem;
+        }
+        
+        .perf-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4ade80;
+        }
+        
+        .perf-item .value.warning {
+            color: #fbbf24;
+        }
+        
+        .perf-item .value.danger {
+            color: #f87171;
+        }
+        
+        .perf-bar {
+            height: 3px;
+            background: #333;
+            border-radius: 2px;
+            margin-top: 0.4rem;
+            overflow: hidden;
+        }
+        
+        .perf-bar-fill {
+            height: 100%;
+            background: #4ade80;
+            transition: width 0.3s ease;
+        }
+        
+        .perf-bar-fill.warning {
+            background: #fbbf24;
+        }
+        
+        .perf-bar-fill.danger {
+            background: #f87171;
+        }
+        
+        .export-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .export-panel h3 {
+            font-size: 0.9rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-export {
+            background: #22c55e;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-export:hover {
+            background: #16a34a;
+        }
+        
+        .btn-export:disabled {
+            background: #86efac;
+            cursor: not-allowed;
+        }
+        
+        .completed-games-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .completed-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .completed-label {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.875rem;
+        }
+        
+        .completed-value {
+            color: #fff;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .completed-sub {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.15);
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>五子棋 AI 对弈平台</h1>
+        <div class="version">v{{ version }}</div>
+    </header>
+    
+    <!-- 主菜单 -->
+    <div class="main-menu" id="mainMenu">
+        <h2>选择游戏模式</h2>
+        <div class="mode-cards">
+            <div class="mode-card" onclick="enterMode('pvp')">
+                <div class="mode-icon">👥</div>
+                <h3>人人对抗</h3>
+                <p>两位玩家在同一设备上轮流对弈，体验传统五子棋的乐趣</p>
+            </div>
+            <div class="mode-card" onclick="enterMode('pve')">
+                <div class="mode-icon">🤖</div>
+                <h3>人机对抗</h3>
+                <p>挑战 AI 或大模型，提升你的棋艺水平</p>
+            </div>
+            <div class="mode-card" onclick="enterMode('eve')">
+                <div class="mode-icon">⚔️</div>
+                <h3>机机对抗</h3>
+                <p>AI 与 AI 自动对战，支持循环测试和性能监控</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 人人对抗界面 -->
+    <div class="game-interface" id="pvpInterface">
+        <button class="back-btn" onclick="backToMenu()">← 返回主菜单</button>
+        <div class="normal-layout">
+            <aside class="sidebar">
+                <h2>游戏设置</h2>
+                <div class="form-group">
+                    <label>棋盘大小</label>
+                    <select id="pvpBoardSize">
+                        <option value="9">9×9</option>
+                        <option value="13">13×13</option>
+                        <option value="15" selected>15×15</option>
+                        <option value="19">19×19</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>规则模式</label>
+                    <select id="pvpRuleMode">
+                        <option value="free_style">自由模式</option>
+                        <option value="standard">标准模式</option>
+                        <option value="renju">连珠模式</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="createGame('pvp')">新游戏</button>
+                <button class="btn btn-secondary" onclick="undoMove()">悔棋</button>
+            </aside>
+            <main class="game-area">
+                <div class="status-bar">
+                    <div class="status-text">
+                        <span class="status-indicator black"></span>
+                        <span id="pvpStatusText">黑方回合</span>
+                    </div>
+                    <div id="pvpMoveCount">步数: 0</div>
+                </div>
+                <div class="board-container">
+                    <div class="board">
+                        <div class="board-grid" id="pvpBoard"></div>
+                    </div>
+                </div>
+                <div class="history-panel">
+                    <h3>落子记录</h3>
+                    <div class="history-list" id="pvpHistoryList"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- 人机对抗界面 -->
+    <div class="game-interface" id="pveInterface">
+        <button class="back-btn" onclick="backToMenu()">← 返回主菜单</button>
+        <div class="normal-layout">
+            <aside class="sidebar">
+                <h2>游戏设置</h2>
+                <div class="form-group">
+                    <label>棋盘大小</label>
+                    <select id="pveBoardSize">
+                        <option value="9">9×9</option>
+                        <option value="13">13×13</option>
+                        <option value="15" selected>15×15</option>
+                        <option value="19">19×19</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>规则模式</label>
+                    <select id="pveRuleMode">
+                        <option value="free_style">自由模式</option>
+                        <option value="standard">标准模式</option>
+                        <option value="renju">连珠模式</option>
+                    </select>
+                </div>
+                <hr style="margin: 1rem 0; border: none; border-top: 1px solid #eee;">
+                <h2>对手设置</h2>
+                <div class="form-group">
+                    <label>对手类型</label>
+                    <select id="pveOpponentType">
+                        <option value="ai">AI (Minimax)</option>
+                        <option value="llm">大模型</option>
+                    </select>
+                </div>
+                <div class="form-group" id="pveModelGroup">
+                    <label>模型</label>
+                    <select id="pveModel">
+                        <option value="gemma3:1b">gemma3:1b</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>执棋颜色</label>
+                    <select id="pvePlayerColor">
+                        <option value="black">黑棋 (先手)</option>
+                        <option value="white">白棋 (后手)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="createGame('pve')">新游戏</button>
+                <button class="btn btn-secondary" onclick="undoMove()">悔棋</button>
+                <button class="btn btn-secondary" onclick="autoMove()">AI 下棋</button>
+            </aside>
+            <main class="game-area">
+                <div class="status-bar">
+                    <div class="status-text">
+                        <span class="status-indicator black"></span>
+                        <span id="pveStatusText">黑方回合</span>
+                    </div>
+                    <div id="pveMoveCount">步数: 0</div>
+                </div>
+                <div class="board-container">
+                    <div class="board">
+                        <div class="board-grid" id="pveBoard"></div>
+                    </div>
+                </div>
+                <div class="history-panel">
+                    <h3>落子记录</h3>
+                    <div class="history-list" id="pveHistoryList"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- 机机对抗界面 -->
+    <div class="game-interface" id="eveInterface">
+        <button class="back-btn" onclick="backToMenu()">← 返回主菜单</button>
+        <div class="ai-battle-layout">
+            <!-- 顶部：性能监控长条（扩大） -->
+            <div class="perf-bar-top" style="padding: 0.8rem 1.5rem;">
+                <h3>⚡ 系统性能监控</h3>
+                <div class="perf-bar-items">
+                    <div class="perf-bar-item">
+                        <span class="label">CPU</span>
+                        <span class="value" id="cpuUsage">--%</span>
+                        <div class="bar"><div class="bar-fill" id="cpuBar" style="width: 0%"></div></div>
+                    </div>
+                    <div class="perf-bar-item">
+                        <span class="label">内存</span>
+                        <span class="value" id="memUsage">--%</span>
+                        <div class="bar"><div class="bar-fill" id="memBar" style="width: 0%"></div></div>
+                    </div>
+                    <div class="perf-bar-item">
+                        <span class="label">显存</span>
+                        <span class="value" id="gpuMemUsage">--%</span>
+                        <div class="bar"><div class="bar-fill" id="gpuMemBar" style="width: 0%"></div></div>
+                    </div>
+                    <div class="perf-bar-item">
+                        <span class="label">GPU</span>
+                        <span class="value" id="gpuUsage">--%</span>
+                        <div class="bar"><div class="bar-fill" id="gpuBar" style="width: 0%"></div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 下方主内容区 -->
+            <div class="ai-battle-main-content">
+                <!-- 左侧：全部是对战性能测试模块 -->
+                <div class="ai-battle-left">
+                    <div class="batch-panel">
+                        <h2 style="font-size: 0.95rem; color: #667eea; margin-bottom: 0.5rem;">🔄 循环对战性能测试</h2>
+                        
+                        <!-- 控制区 -->
+                        <div class="batch-controls" style="margin-bottom: 0.5rem;">
+                            <label style="font-size: 0.75rem;">局数：</label>
+                            <input type="number" id="batchCount" min="1" max="100" value="10" style="width: 50px; padding: 0.2rem; font-size: 0.75rem;">
+                            <button class="btn-batch" id="startBatchBtn" onclick="startBatchGames()" style="padding: 0.3rem 0.8rem; font-size: 0.75rem;">开始</button>
+                            <button class="btn-batch" id="stopBatchBtn" onclick="stopBatchGames()" style="display:none; background: #dc3545; padding: 0.3rem 0.8rem; font-size: 0.75rem;">停止</button>
+                        </div>
+                        
+                        <!-- 进度条 -->
+                        <div class="batch-progress" id="batchProgressContainer" style="display:none; margin-bottom: 0.5rem; height: 16px;">
+                            <div class="batch-progress-bar" id="batchProgressBar" style="font-size: 0.65rem;">0%</div>
+                        </div>
+                        
+                        <!-- 已完成局数 -->
+                        <div class="completed-games-bar" style="margin-bottom: 0.5rem; padding: 0.3rem; border-radius: 4px;">
+                            <div class="completed-content" style="gap: 0.5rem;">
+                                <span class="completed-label" style="font-size: 0.7rem;">已完成</span>
+                                <span class="completed-value" id="gamesCompleted" style="font-size: 1.1rem;">0</span>
+                                <span class="completed-sub" id="drawCount" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">平局: 0</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 第一行：黑白方胜率 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方胜率</h4>
+                                <div class="value" id="blackWinRate">--%</div>
+                                <div class="sub-value" id="blackWins">0 胜</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方胜率</h4>
+                                <div class="value" id="whiteWinRate">--%</div>
+                                <div class="sub-value" id="whiteWins">0 胜</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第二行：黑白方平均每步耗时 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方平均每步耗时</h4>
+                                <div class="value" id="blackAvgTime">--ms</div>
+                                <div class="sub-value" id="blackTotalTime">总计: --s</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方平均每步耗时</h4>
+                                <div class="value" id="whiteAvgTime">--ms</div>
+                                <div class="sub-value" id="whiteTotalTime">总计: --s</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第三行：黑白方平均每局步数 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方平均每局步数</h4>
+                                <div class="value" id="blackAvgMoves">--</div>
+                                <div class="sub-value">步/局</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方平均每局步数</h4>
+                                <div class="value" id="whiteAvgMoves">--</div>
+                                <div class="sub-value">步/局</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第四行：黑白方关键失误 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方关键失误</h4>
+                                <div class="value" id="blackErrors">--</div>
+                                <div class="sub-value">错过必杀/未拦截</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方关键失误</h4>
+                                <div class="value" id="whiteErrors">--</div>
+                                <div class="sub-value">错过必杀/未拦截</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第五行：黑白方超时判负 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方超时判负</h4>
+                                <div class="value" id="blackTimeouts">0</div>
+                                <div class="sub-value">超过120秒判负</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方超时判负</h4>
+                                <div class="value" id="whiteTimeouts">0</div>
+                                <div class="sub-value">超过120秒判负</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第六行：黑白方平均显存占用 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方平均显存占用</h4>
+                                <div class="value" id="blackAvgGpuMem">--%</div>
+                                <div class="sub-value" id="blackGpuMemSub">采样: 0次</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方平均显存占用</h4>
+                                <div class="value" id="whiteAvgGpuMem">--%</div>
+                                <div class="sub-value" id="whiteGpuMemSub">采样: 0次</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第七行：黑白方平均GPU占用 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方平均GPU占用</h4>
+                                <div class="value" id="blackAvgGpuUtil">--%</div>
+                                <div class="sub-value" id="blackGpuUtilSub">采样: 0次</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方平均GPU占用</h4>
+                                <div class="value" id="whiteAvgGpuUtil">--%</div>
+                                <div class="sub-value" id="whiteGpuUtilSub">采样: 0次</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第八行：黑白方平均内存占用 -->
+                        <div class="battle-stats-row">
+                            <div class="battle-stat-card black">
+                                <h4>⚫ 黑方平均内存占用</h4>
+                                <div class="value" id="blackAvgMem">--%</div>
+                                <div class="sub-value" id="blackMemSub">采样：0 次</div>
+                            </div>
+                            <div class="battle-stat-card white">
+                                <h4>⚪ 白方平均内存占用</h4>
+                                <div class="value" id="whiteAvgMem">--%</div>
+                                <div class="sub-value" id="whiteMemSub">采样：0 次</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧：导出按钮 + 棋盘 + 模型配置 -->
+                <div class="ai-battle-right">
+                    <!-- 导出按钮（棋盘上方） -->
+                    <div class="export-bar" style="background: white; border-radius: 8px; padding: 0.5rem 1rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 0.5rem;">
+                        <button class="btn-export" id="exportBtn" onclick="exportToExcel()" disabled style="padding: 0.4rem 1.5rem; font-size: 0.8rem;">
+                            📊 导出统计数据到 Excel
+                        </button>
+                    </div>
+                    <!-- Temperature 滑块 -->
+                    <div class="temperature-control" style="background: white; border-radius: 8px; padding: 0.5rem 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 0.5rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <span style="font-size: 0.75rem; color: #666;">🎯 Temperature: <span id="tempValue">0.5</span></span>
+                            <input type="range" id="temperatureSlider" min="0.1" max="1.0" step="0.1" value="0.5" 
+                                style="width: 150px; margin-left: 0.5rem;"
+                                onchange="document.getElementById('tempValue').textContent = this.value">
+                        </div>
+                    </div>
+                    
+                    <!-- 棋盘区域 -->
+                    <div class="game-area" style="flex: 1; padding: 0.75rem;">
+                        <div class="status-bar" style="padding: 0.4rem 0.6rem; margin-bottom: 0.5rem;">
+                            <div class="status-text" style="font-size: 0.8rem;">
+                                <span class="status-indicator black"></span>
+                                <span id="eveStatusText">黑方回合</span>
+                            </div>
+                            <div id="eveMoveCount" style="font-size: 0.8rem;">步数: 0</div>
+                        </div>
+                        <div class="board-container" style="padding: 0.3rem;">
+                            <div class="board" style="padding: 10px;">
+                                <div class="board-grid" id="eveBoard"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 模型配置（棋盘下方，与左侧循环对战模块底部对齐） -->
+                    <div class="sidebar" style="padding: 0.5rem;">
+                        <h2 style="font-size: 0.75rem; margin-bottom: 0.3rem;">模型配置 <button onclick="loadModels()" style="font-size: 0.6rem; padding: 0.1rem 0.4rem; margin-left: 0.3rem; cursor: pointer; background: #667eea; color: white; border: none; border-radius: 3px;">刷新</button></h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.65rem; margin-bottom: 0.1rem;">⚫ 黑方模型</label>
+                                <select id="eveBlackModel" style="padding: 0.2rem; font-size: 0.7rem; width: 100%;">
+                                    <option value="gemma3:1b">gemma3:1b</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label style="font-size: 0.65rem; margin-bottom: 0.1rem;">⚪ 白方模型</label>
+                                <select id="eveWhiteModel" style="padding: 0.2rem; font-size: 0.7rem; width: 100%;">
+                                    <option value="gemma3:1b">gemma3:1b</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2 id="gameOverTitle">游戏结束</h2>
+            <p id="gameOverMessage">黑方获胜！</p>
+            <button class="btn btn-primary" onclick="closeModal()">再来一局</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+        <script>
+            // 如果 Socket.IO 加载失败，使用空实现
+            if (typeof io === 'undefined') {
+                window.io = function() {
+                    return {
+                        on: function() {},
+                        emit: function() {}
+                    };
+                };
+                console.warn('Socket.IO 加载失败，使用降级模式');
+            }
+        </script>
+    <script>
+        let currentGameId = null;
+        let boardSize = 15;
+        let socket = null;
+        let currentMode = null;
+        
+        // 进入模式
+        function enterMode(mode) {
+            currentMode = mode;
+            document.getElementById('mainMenu').style.display = 'none';
+            document.querySelectorAll('.game-interface').forEach(el => el.classList.remove('active'));
+            document.getElementById(mode + 'Interface').classList.add('active');
+            
+            // 加载模型列表
+            loadModels();
+            
+            // 创建默认游戏
+            setTimeout(() => createGame(mode), 100);
+        }
+        
+        // 返回主菜单
+        function backToMenu() {
+            currentMode = null;
+            document.getElementById('mainMenu').style.display = 'block';
+            document.querySelectorAll('.game-interface').forEach(el => el.classList.remove('active'));
+        }
+        
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/models');
+                const data = await response.json();
+                
+                console.log('Models API response:', data);
+                
+                const modelSelects = ['eveBlackModel', 'eveWhiteModel', 'pveModel'];
+                
+                if (data.ollama_available && data.local_models && data.local_models.length > 0) {
+                    modelSelects.forEach(id => {
+                        const select = document.getElementById(id);
+                        if (select) {
+                            select.innerHTML = '';
+                            data.local_models.forEach(model => {
+                                const option = document.createElement('option');
+                                option.value = model;
+                                option.textContent = model;
+                                select.appendChild(option);
+                            });
+                        }
+                    });
+                    console.log('Loaded ' + data.local_models.length + ' models from Ollama');
+                } else {
+                    // Ollama 不可用时，显示默认模型并添加提示
+                    modelSelects.forEach(id => {
+                        const select = document.getElementById(id);
+                        if (select) {
+                            select.innerHTML = '<option value="gemma3:1b">gemma3:1b (默认)</option>';
+                            if (!data.ollama_available) {
+                                select.innerHTML += '<option disabled>—— Ollama 未运行 ——</option>';
+                            }
+                        }
+                    });
+                    console.warn('Ollama not available or no models found');
+                }
+            } catch (error) {
+                console.error('Failed to load models:', error);
+                // 出错时保持默认模型
+                ['eveBlackModel', 'eveWhiteModel', 'pveModel'].forEach(id => {
+                    const select = document.getElementById(id);
+                    if (select && select.options.length === 0) {
+                        select.innerHTML = '<option value="gemma3:1b">gemma3:1b (默认)</option>';
+                    }
+                });
+            }
+        }
+        
+        function init() {
+            socket = io();
+            socket.on('game_update', function(data) {
+                renderBoard(data);
+            });
+            
+            // 绑定类型切换事件
+            ['pveOpponentType'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', function() {
+                        const modelGroup = document.getElementById(id.replace('Type', 'ModelGroup'));
+                        if (modelGroup) {
+                            modelGroup.style.display = this.value === 'llm' ? 'block' : 'none';
+                        }
+                        if (this.value === 'llm') loadModels();
+                    });
+                }
+            });
+        }
+        
+        function getModeConfig(mode) {
+            const prefix = mode;
+            let boardSize, ruleMode, blackPlayer, whitePlayer;
+            
+            if (mode === 'pvp') {
+                boardSize = parseInt(document.getElementById(prefix + 'BoardSize').value);
+                ruleMode = document.getElementById(prefix + 'RuleMode').value;
+                blackPlayer = { type: 'human' };
+                whitePlayer = { type: 'human' };
+            } else if (mode === 'pve') {
+                boardSize = parseInt(document.getElementById(prefix + 'BoardSize').value);
+                ruleMode = document.getElementById(prefix + 'RuleMode').value;
+                const opponentType = document.getElementById('pveOpponentType').value;
+                const opponentModel = document.getElementById('pveModel').value;
+                const playerColor = document.getElementById('pvePlayerColor').value;
+                
+                if (playerColor === 'black') {
+                    blackPlayer = { type: 'human' };
+                    whitePlayer = { type: opponentType, model: opponentModel };
+                } else {
+                    blackPlayer = { type: opponentType, model: opponentModel };
+                    whitePlayer = { type: 'human' };
+                }
+            } else {
+                // 机机对抗：固定使用 13x13 棋盘和自由模式，默认都是 LLM
+                boardSize = 13;
+                ruleMode = 'free_style';
+                const blackModel = document.getElementById('eveBlackModel').value;
+                const whiteModel = document.getElementById('eveWhiteModel').value;
+                
+                blackPlayer = { type: 'llm', model: blackModel };
+                whitePlayer = { type: 'llm', model: whiteModel };
+            }
+            
+            return { boardSize, ruleMode, blackPlayer, whitePlayer, temperature: parseFloat(document.getElementById('temperatureSlider').value) };
+        }
+        
+        async function createGame(mode) {
+            const config = getModeConfig(mode);
+            
+            try {
+                const response = await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        board_size: config.boardSize,
+                        rule_mode: config.ruleMode,
+                        black_player: config.blackPlayer,
+                        white_player: config.whitePlayer,
+                        temperature: config.temperature
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentGameId = result.metadata.game_id;
+                    boardSize = config.boardSize;
+                    renderBoard(result.data);
+                    
+                    if (socket) {
+                        socket.emit('join_game', { game_id: currentGameId });
+                    }
+                    
+                    showNotification('新游戏已创建', 'success');
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('创建游戏失败', 'error');
+            }
+        }
+        
+        async function makeMove(position) {
+            if (!currentGameId) return;
+            
+            try {
+                const response = await fetch(`/api/games/${currentGameId}/move`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ position: position })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderBoard(result.data);
+                    if (result.data.state !== 'playing') {
+                        showGameOver(result.data);
+                    }
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('落子失败', 'error');
+            }
+        }
+        
+        async function undoMove() {
+            if (!currentGameId) return;
+            
+            try {
+                const response = await fetch(`/api/games/${currentGameId}/undo`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderBoard(result.data);
+                    showNotification('已悔棋', 'info');
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('悔棋失败', 'error');
+            }
+        }
+        
+        async function autoMove() {
+            if (!currentGameId) return;
+            
+            try {
+                const response = await fetch(`/api/games/${currentGameId}/auto`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderBoard(result.data);
+                    if (result.data.state !== 'playing') {
+                        showGameOver(result.data);
+                    }
+                } else {
+                    showNotification(result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('AI 下棋失败', 'error');
+            }
+        }
+        
+        let autoPlayInterval = null;
+        let isAutoPlaying = false;
+        
+        async function autoPlay() {
+            if (isAutoPlaying) {
+                isAutoPlaying = false;
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = null;
+                }
+                showNotification('自动对弈已停止', 'info');
+                return;
+            }
+            
+            isAutoPlaying = true;
+            showNotification('自动对弈已开始', 'success');
+            
+            async function playOnce() {
+                if (!isAutoPlaying || !currentGameId) return false;
+                const response = await fetch(`/api/games/${currentGameId}/auto`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    renderBoard(result.data);
+                    if (result.data.state !== 'playing') {
+                        showGameOver(result.data);
+                        return false;
+                    }
+                    return true;
+                }
+                return false;
+            }
+            
+            let canContinue = await playOnce();
+            if (canContinue && isAutoPlaying) {
+                autoPlayInterval = setInterval(async () => {
+                    canContinue = await playOnce();
+                    if (!canContinue) {
+                        isAutoPlaying = false;
+                        clearInterval(autoPlayInterval);
+                        autoPlayInterval = null;
+                    }
+                }, 1500);
+            } else {
+                isAutoPlaying = false;
+            }
+        }
+        
+        function renderBoard(gameState) {
+            const prefix = currentMode;
+            const board = document.getElementById(prefix + 'Board');
+            const size = gameState.board_size;
+            
+            // 所有模式都使用大棋盘
+            const cellSize = 36;
+            
+            board.style.gridTemplateColumns = `repeat(${size}, ${cellSize}px)`;
+            board.innerHTML = '';
+            
+            const boardData = gameState.board;
+            const lastMove = gameState.moves.length > 0 ? 
+                gameState.moves[gameState.moves.length - 1].position : null;
+            
+            for (let row = 0; row < size; row++) {
+                for (let col = 0; col < size; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'board-cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    
+                    const stone = boardData[row][col];
+                    if (stone !== 0) {
+                        const stoneEl = document.createElement('div');
+                        stoneEl.className = `stone ${stone === 1 ? 'black' : 'white'}`;
+                        cell.appendChild(stoneEl);
+                    }
+                    
+                    if (lastMove) {
+                        const lastCol = lastMove.charCodeAt(0) - 65;
+                        const lastRow = parseInt(lastMove.slice(1)) - 1;
+                        if (row === lastRow && col === lastCol) {
+                            cell.classList.add('last-move');
+                        }
+                    }
+                    
+                    cell.onclick = () => {
+                        const notation = String.fromCharCode(65 + col) + (row + 1);
+                        makeMove(notation);
+                    };
+                    
+                    board.appendChild(cell);
+                }
+            }
+            
+            updateStatus(gameState);
+            updateHistory(gameState.moves);
+        }
+        
+        function updateStatus(gameState) {
+            const prefix = currentMode;
+            const statusText = document.getElementById(prefix + 'StatusText');
+            const statusIndicator = document.querySelector('#' + prefix + 'Interface .status-indicator');
+            const moveCount = document.getElementById(prefix + 'MoveCount');
+            
+            if (moveCount) moveCount.textContent = `步数: ${gameState.moves.length}`;
+            
+            if (gameState.state === 'playing') {
+                const isBlack = gameState.current_stone === 'BLACK';
+                if (statusIndicator) statusIndicator.className = `status-indicator ${isBlack ? 'black' : 'white'}`;
+                if (statusText) statusText.textContent = `${isBlack ? '黑方' : '白方'}回合`;
+            } else if (gameState.winner) {
+                const winner = gameState.winner === 'BLACK' ? '黑方' : '白方';
+                if (statusText) statusText.textContent = `${winner}获胜！`;
+            } else {
+                if (statusText) statusText.textContent = '平局';
+            }
+        }
+        
+        function updateHistory(moves) {
+            const prefix = currentMode;
+            const historyList = document.getElementById(prefix + 'HistoryList');
+            if (!historyList) return;
+            
+            historyList.innerHTML = '';
+            
+            moves.forEach((move, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.textContent = `${index + 1}. ${move.stone === 'BLACK' ? '●' : '○'} ${move.position}`;
+                historyList.appendChild(item);
+            });
+            
+            historyList.scrollTop = historyList.scrollHeight;
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.remove(), 3000);
+        }
+        
+        function showGameOver(gameState) {
+            const modal = document.getElementById('gameOverModal');
+            const title = document.getElementById('gameOverTitle');
+            const message = document.getElementById('gameOverMessage');
+            
+            if (gameState.winner) {
+                const winner = gameState.winner === 'BLACK' ? '黑方' : '白方';
+                title.textContent = `${winner}获胜！`;
+                message.textContent = gameState.timeout ? gameState.message : `恭喜${winner}赢得比赛！`;
+            } else {
+                title.textContent = '平局';
+                message.textContent = '比赛以平局结束。';
+            }
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('gameOverModal').classList.remove('active');
+            if (currentMode) createGame(currentMode);
+        }
+        
+        // ========== 循环对战模块 ==========
+        let batchRunning = false;
+        let batchStats = {
+            totalGames: 0, completedGames: 0, blackWins: 0, whiteWins: 0, draws: 0,
+            totalMoves: 0, blackTotalTime: 0, whiteTotalTime: 0,
+            blackMoveCount: 0, whiteMoveCount: 0, blackErrors: 0, whiteErrors: 0,
+            blackTimeouts: 0, whiteTimeouts: 0, gameResults: [],
+            blackGpuMemTotal: 0, blackGpuMemSamples: 0, whiteGpuMemTotal: 0, whiteGpuMemSamples: 0,
+            blackGpuUtilTotal: 0, blackGpuUtilSamples: 0, whiteGpuUtilTotal: 0, whiteGpuUtilSamples: 0,
+            blackMemTotal: 0, blackMemSamples: 0, whiteMemTotal: 0, whiteMemSamples: 0
+        };
+        let perfMonitorInterval = null;
+        
+        function resetBatchStats() {
+            batchStats = {
+                totalGames: 0, completedGames: 0, blackWins: 0, whiteWins: 0, draws: 0,
+                totalMoves: 0, blackTotalTime: 0, whiteTotalTime: 0,
+                blackMoveCount: 0, whiteMoveCount: 0, blackErrors: 0, whiteErrors: 0,
+                blackTimeouts: 0, whiteTimeouts: 0, gameResults: [],
+                blackGpuMemTotal: 0, blackGpuMemSamples: 0, whiteGpuMemTotal: 0, whiteGpuMemSamples: 0,
+                blackGpuUtilTotal: 0, blackGpuUtilSamples: 0, whiteGpuUtilTotal: 0, whiteGpuUtilSamples: 0,
+                blackMemTotal: 0, blackMemSamples: 0, whiteMemTotal: 0, whiteMemSamples: 0
+            };
+            updateBatchUI();
+        }
+        
+        function updateBatchUI() {
+            const completed = batchStats.completedGames;
+            const total = batchStats.totalGames;
+            
+            const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+            const progressBar = document.getElementById('batchProgressBar');
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+                progressBar.textContent = `${completed}/${total}`;
+            }
+            
+            // 胜率
+            const blackWinRate = completed > 0 ? ((batchStats.blackWins / completed) * 100).toFixed(1) : '--';
+            const whiteWinRate = completed > 0 ? ((batchStats.whiteWins / completed) * 100).toFixed(1) : '--';
+            
+            // 平均每步耗时
+            const blackAvgTime = batchStats.blackMoveCount > 0 ? Math.round(batchStats.blackTotalTime / batchStats.blackMoveCount) : '--';
+            const whiteAvgTime = batchStats.whiteMoveCount > 0 ? Math.round(batchStats.whiteTotalTime / batchStats.whiteMoveCount) : '--';
+            
+            // 平均每局步数（黑方先手，白方后手，步数略有不同）
+            const blackAvgMoves = completed > 0 ? Math.ceil(batchStats.totalMoves / completed / 2) : '--';
+            const whiteAvgMoves = completed > 0 ? Math.floor(batchStats.totalMoves / completed / 2) : '--';
+            
+            // 关键失误
+            const blackAvgErrors = completed > 0 ? (batchStats.blackErrors / completed).toFixed(1) : '--';
+            const whiteAvgErrors = completed > 0 ? (batchStats.whiteErrors / completed).toFixed(1) : '--';
+            
+            // 更新第一行：胜率
+            document.getElementById('blackWinRate').textContent = blackWinRate + '%';
+            document.getElementById('whiteWinRate').textContent = whiteWinRate + '%';
+            document.getElementById('blackWins').textContent = batchStats.blackWins + ' 胜';
+            document.getElementById('whiteWins').textContent = batchStats.whiteWins + ' 胜';
+            
+            // 更新第二行：平均每步耗时
+            document.getElementById('blackAvgTime').textContent = blackAvgTime + 'ms';
+            document.getElementById('whiteAvgTime').textContent = whiteAvgTime + 'ms';
+            document.getElementById('blackTotalTime').textContent = '总计: ' + (batchStats.blackTotalTime / 1000).toFixed(1) + 's';
+            document.getElementById('whiteTotalTime').textContent = '总计: ' + (batchStats.whiteTotalTime / 1000).toFixed(1) + 's';
+            
+            // 更新第三行：平均每局步数
+            document.getElementById('blackAvgMoves').textContent = blackAvgMoves;
+            document.getElementById('whiteAvgMoves').textContent = whiteAvgMoves;
+            
+            // 更新第四行：关键失误
+            document.getElementById('blackErrors').textContent = blackAvgErrors;
+            document.getElementById('whiteErrors').textContent = whiteAvgErrors;
+            
+            // 更新第五行：超时判负
+            document.getElementById('blackTimeouts').textContent = batchStats.blackTimeouts;
+            document.getElementById('whiteTimeouts').textContent = batchStats.whiteTimeouts;
+            
+            // 更新第六行：平均显存占用
+            const blackAvgGpuMem = batchStats.blackGpuMemSamples > 0 ? (batchStats.blackGpuMemTotal / batchStats.blackGpuMemSamples).toFixed(1) : '--';
+            const whiteAvgGpuMem = batchStats.whiteGpuMemSamples > 0 ? (batchStats.whiteGpuMemTotal / batchStats.whiteGpuMemSamples).toFixed(1) : '--';
+            document.getElementById('blackAvgGpuMem').textContent = blackAvgGpuMem + '%';
+            document.getElementById('whiteAvgGpuMem').textContent = whiteAvgGpuMem + '%';
+            document.getElementById('blackGpuMemSub').textContent = '采样: ' + batchStats.blackGpuMemSamples + '次';
+            document.getElementById('whiteGpuMemSub').textContent = '采样: ' + batchStats.whiteGpuMemSamples + '次';
+            
+            // 更新第七行：平均GPU占用
+            const blackAvgGpuUtil = batchStats.blackGpuUtilSamples > 0 ? (batchStats.blackGpuUtilTotal / batchStats.blackGpuUtilSamples).toFixed(1) : '--';
+            const whiteAvgGpuUtil = batchStats.whiteGpuUtilSamples > 0 ? (batchStats.whiteGpuUtilTotal / batchStats.whiteGpuUtilSamples).toFixed(1) : '--';
+            document.getElementById('blackAvgGpuUtil').textContent = blackAvgGpuUtil + '%';
+            document.getElementById('whiteAvgGpuUtil').textContent = whiteAvgGpuUtil + '%';
+            document.getElementById('blackGpuUtilSub').textContent = '采样: ' + batchStats.blackGpuUtilSamples + '次';
+            document.getElementById('whiteGpuUtilSub').textContent = '采样: ' + batchStats.whiteGpuUtilSamples + '次';
+            
+            
+            // 更新第八行：平均内存占用
+            const blackAvgMem = batchStats.blackMemSamples > 0 ? (batchStats.blackMemTotal / batchStats.blackMemSamples).toFixed(1) : '--';
+            const whiteAvgMem = batchStats.whiteMemSamples > 0 ? (batchStats.whiteMemTotal / batchStats.whiteMemSamples).toFixed(1) : '--';
+            document.getElementById('blackAvgMem').textContent = blackAvgMem + '%';
+            document.getElementById('whiteAvgMem').textContent = whiteAvgMem + '%';
+            document.getElementById('blackMemSub').textContent = '采样：' + batchStats.blackMemSamples + '次';
+            document.getElementById('whiteMemSub').textContent = '采样：' + batchStats.whiteMemSamples + '次';
+            // 已完成局数
+            document.getElementById('gamesCompleted').textContent = completed;
+            document.getElementById('drawCount').textContent = '平局: ' + batchStats.draws;
+            
+            const exportBtn = document.getElementById('exportBtn');
+            if (exportBtn) exportBtn.disabled = completed === 0;
+        }
+        
+        async function updatePerformanceMonitor() {
+            try {
+                const response = await fetch('/api/performance');
+                const perf = await response.json();
+                
+                updatePerfItem('cpu', perf.cpu_percent);
+                updatePerfItem('mem', perf.memory_percent);
+                
+                if (perf.gpu_available) {
+                    updatePerfItem('gpuMem', perf.gpu_memory_percent);
+                    updatePerfItem('gpu', perf.gpu_utilization);
+                } else {
+                    document.getElementById('gpuMemUsage').textContent = '不可用';
+                    document.getElementById('gpuUsage').textContent = '不可用';
+                }
+            } catch (error) {
+                console.log('Failed to get performance data');
+            }
+        }
+        
+        function updatePerfItem(type, value) {
+            const el = document.getElementById(type + 'Usage');
+            const bar = document.getElementById(type + 'Bar');
+            if (el) el.textContent = value.toFixed(1) + '%';
+            if (bar) bar.style.width = value + '%';
+            
+            if (el && bar) {
+                el.classList.remove('warning', 'danger');
+                bar.classList.remove('warning', 'danger');
+                if (value > 90) {
+                    el.classList.add('danger');
+                    bar.classList.add('danger');
+                } else if (value > 70) {
+                    el.classList.add('warning');
+                    bar.classList.add('warning');
+                }
+            }
+        }
+        
+        async function startBatchGames() {
+            const count = parseInt(document.getElementById('batchCount').value);
+            
+            if (isNaN(count) || count < 1 || count > 100) {
+                showNotification('请输入有效数字 (1-100)', 'error');
+                return;
+            }
+            
+            batchRunning = true;
+            resetBatchStats();
+            batchStats.totalGames = count;
+            
+            document.getElementById('startBatchBtn').style.display = 'none';
+            document.getElementById('stopBatchBtn').style.display = 'inline-block';
+            document.getElementById('batchProgressContainer').style.display = 'block';
+            
+            updatePerformanceMonitor();
+            perfMonitorInterval = setInterval(updatePerformanceMonitor, 2000);
+            
+            for (let i = 0; i < count && batchRunning; i++) {
+                await runSingleBatchGame();
+                updateBatchUI();
+            }
+            
+            stopBatchGames();
+            showNotification(`循环对战完成: 共 ${batchStats.completedGames} 局`, 'success');
+        }
+        
+        function stopBatchGames() {
+            batchRunning = false;
+            document.getElementById('startBatchBtn').style.display = 'inline-block';
+            document.getElementById('stopBatchBtn').style.display = 'none';
+            
+            if (perfMonitorInterval) {
+                clearInterval(perfMonitorInterval);
+                perfMonitorInterval = null;
+            }
+        }
+        
+        async function runSingleBatchGame() {
+            const config = getModeConfig('eve');
+            
+            try {
+                const createResponse = await fetch('/api/games', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        board_size: config.boardSize,
+                        rule_mode: config.ruleMode,
+                        black_player: config.blackPlayer,
+                        white_player: config.whitePlayer,
+                        temperature: config.temperature
+                    })
+                });
+                
+                const createResult = await createResponse.json();
+                if (!createResult.success) return;
+                
+                const gameId = createResult.metadata.game_id;
+                currentGameId = gameId;
+                
+                let gameState = createResult.data;
+                let moveCount = 0;
+                let blackTime = 0, whiteTime = 0;
+                let blackMoves = 0, whiteMoves = 0;
+                
+                while (gameState.state === 'playing' && batchRunning && moveCount < 225) {
+                    const startTime = Date.now();
+                    const currentStone = gameState.current_stone;
+                    
+                    const moveResponse = await fetch(`/api/games/${gameId}/auto`, { method: 'POST' });
+                    const moveResult = await moveResponse.json();
+                    const moveTime = Date.now() - startTime;
+                    
+                    if (!moveResult.success) break;
+                    
+                    gameState = moveResult.data;
+                    renderBoard(gameState);
+                    
+                    if (gameState.timeout) {
+                        if (gameState.timeout_player === 'BLACK') batchStats.blackTimeouts++;
+                        else if (gameState.timeout_player === 'WHITE') batchStats.whiteTimeouts++;
+                        break;
+                    }
+                    
+                    moveCount++;
+                    if (currentStone === 'BLACK') {
+                        blackTime += moveTime;
+                        blackMoves++;
+                    } else {
+                        whiteTime += moveTime;
+                        whiteMoves++;
+                    }
+                    
+                    // 收集GPU性能数据
+                    try {
+                        const perfResponse = await fetch('/api/performance');
+                        const perf = await perfResponse.json();
+                        if (perf.gpu_available) {
+                            if (currentStone === 'BLACK') {
+                                batchStats.blackGpuMemTotal += perf.gpu_memory_percent;
+                                batchStats.blackGpuMemSamples++;
+                                batchStats.blackGpuUtilTotal += perf.gpu_utilization;
+                                batchStats.blackGpuUtilSamples++;
+                                batchStats.blackMemTotal += perf.memory_percent;
+                                batchStats.blackMemSamples++;
+                            } else {
+                                batchStats.whiteGpuMemTotal += perf.gpu_memory_percent;
+                                batchStats.whiteGpuMemSamples++;
+                                batchStats.whiteGpuUtilTotal += perf.gpu_utilization;
+                                batchStats.whiteGpuUtilSamples++;
+                                batchStats.whiteMemTotal += perf.memory_percent;
+                                batchStats.whiteMemSamples++;
+                            }
+                        } else {
+                            // 没有GPU时只记录系统内存
+                            if (currentStone === 'BLACK') {
+                                batchStats.blackMemTotal += perf.memory_percent;
+                                batchStats.blackMemSamples++;
+                            } else {
+                                batchStats.whiteMemTotal += perf.memory_percent;
+                                batchStats.whiteMemSamples++;
+                            }
+                        }
+                    } catch (e) {}
+                    
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+                // 只有游戏真正完成才统计
+                if (gameState.state !== 'playing' && moveCount > 0) {
+                    batchStats.completedGames++;
+                    batchStats.totalMoves += moveCount;
+                    batchStats.blackTotalTime += blackTime;
+                    batchStats.whiteTotalTime += whiteTime;
+                    batchStats.blackMoveCount += blackMoves;
+                    batchStats.whiteMoveCount += whiteMoves;
+                
+                    if (gameState.winner === 'BLACK') batchStats.blackWins++;
+                    else if (gameState.winner === 'WHITE') batchStats.whiteWins++;
+                    else batchStats.draws++;
+                
+                    try {
+                        const analyzeResponse = await fetch(`/api/games/${gameId}/analyze`);
+                        const analyzeResult = await analyzeResponse.json();
+                        if (analyzeResult.success) {
+                            batchStats.blackErrors += analyzeResult.data.black_errors;
+                            batchStats.whiteErrors += analyzeResult.data.white_errors;
+                        }
+                    } catch (e) {}
+                
+                    batchStats.gameResults.push({
+                        gameNumber: batchStats.completedGames,
+                        moves: moveCount,
+                        winner: gameState.winner || 'DRAW',
+                        blackTime: blackTime,
+                        whiteTime: whiteTime
+                    });
+
+                    
+                    // 清理游戏，避免状态污染
+                    try {
+                        await fetch(`/api/games/${gameId}`, { method: 'DELETE' });
+                        console.log(`Game ${gameId} cleaned up`);
+                    } catch (e) {
+                        console.log('Failed to delete game:', e);
+                    }
+                
+                }
+            } catch (error) {
+                console.log('Batch game error:', error);
+            }
+        }
+        
+        function exportToExcel() {
+            if (batchStats.completedGames === 0) {
+                showNotification('没有数据可导出', 'error');
+                return;
+            }
+            
+            const blackModel = document.getElementById('eveBlackModel').value || 'AI';
+            const whiteModel = document.getElementById('eveWhiteModel').value || 'AI';
+            
+            let csv = '\uFEFF';
+            csv += '五子棋 AI 模型性能报告\n';
+            csv += `生成时间: ${new Date().toLocaleString()}\n\n`;
+            
+            csv += '统计摘要\n';
+            csv += '指标,黑方 (' + blackModel + '),白方 (' + whiteModel + ')\n';
+            csv += `总局数,${batchStats.completedGames},${batchStats.completedGames}\n`;
+            csv += `胜局,${batchStats.blackWins},${batchStats.whiteWins}\n`;
+            csv += `胜率,${((batchStats.blackWins/batchStats.completedGames)*100).toFixed(1)}%,${((batchStats.whiteWins/batchStats.completedGames)*100).toFixed(1)}%\n`;
+            csv += `平局,${batchStats.draws},${batchStats.draws}\n`;
+            csv += `平均步数/局,${(batchStats.totalMoves/batchStats.completedGames).toFixed(1)},${(batchStats.totalMoves/batchStats.completedGames).toFixed(1)}\n`;
+            csv += `平均每步耗时(ms),${batchStats.blackMoveCount > 0 ? Math.round(batchStats.blackTotalTime/batchStats.blackMoveCount) : 0},${batchStats.whiteMoveCount > 0 ? Math.round(batchStats.whiteTotalTime/batchStats.whiteMoveCount) : 0}\n`;
+            csv += `总耗时(s),${(batchStats.blackTotalTime/1000).toFixed(1)},${(batchStats.whiteTotalTime/1000).toFixed(1)}\n`;
+            csv += `平均关键失误,${(batchStats.blackErrors/batchStats.completedGames).toFixed(2)},${(batchStats.whiteErrors/batchStats.completedGames).toFixed(2)}\n`;
+            csv += `超时判负次数，${batchStats.blackTimeouts},${batchStats.whiteTimeouts}
+`;
+            csv += `平均显存占用 (%),${batchStats.blackGpuMemSamples > 0 ? (batchStats.blackGpuMemTotal/batchStats.blackGpuMemSamples).toFixed(1) : 'N/A'},${batchStats.whiteGpuMemSamples > 0 ? (batchStats.whiteGpuMemTotal/batchStats.whiteGpuMemSamples).toFixed(1) : 'N/A'}
+`;
+            csv += `平均 GPU 占用 (%),${batchStats.blackGpuUtilSamples > 0 ? (batchStats.blackGpuUtilTotal/batchStats.blackGpuUtilSamples).toFixed(1) : 'N/A'},${batchStats.whiteGpuUtilSamples > 0 ? (batchStats.whiteGpuUtilTotal/batchStats.whiteGpuUtilSamples).toFixed(1) : 'N/A'}
+
+`;
+            csv += `平均内存占用 (%),${batchStats.blackMemSamples > 0 ? (batchStats.blackMemTotal/batchStats.blackMemSamples).toFixed(1) : 'N/A'},${batchStats.whiteMemSamples > 0 ? (batchStats.whiteMemTotal/batchStats.whiteMemSamples).toFixed(1) : 'N/A'}
+
+`;
+            
+            csv += '各局详情\n';
+            csv += '局号,步数,获胜方,黑方耗时(ms),白方耗时(ms)\n';
+            batchStats.gameResults.forEach(game => {
+                const winner = game.winner === 'BLACK' ? '黑方' : (game.winner === 'WHITE' ? '白方' : '平局');
+                csv += `${game.gameNumber},${game.moves},${winner},${game.blackTime},${game.whiteTime}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `五子棋统计_${blackModel}_vs_${whiteModel}_${Date.now()}.csv`;
+            link.click();
+            
+            showNotification('统计数据导出成功！', 'success');
+        }
+        
+        // 启动性能监控
+        setInterval(updatePerformanceMonitor, 5000);
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
